@@ -1,0 +1,8 @@
+object DMCliente: TDMCliente
+  Height = 330
+  Width = 545
+  object sqlConsulta: TFDQuery
+    Left = 112
+    Top = 80
+  end
+end

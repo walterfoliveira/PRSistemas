@@ -1,0 +1,20 @@
+program PRSistemas;
+
+uses
+  Vcl.Forms,
+  untPrincipal in 'untPrincipal.pas' {Form1},
+  uDao in 'Dao\uDao.pas',
+  uCliente in 'Model\uCliente.pas',
+  ClienteController in 'Controller\ClienteController.pas',
+  untDMConexao in 'Dao\untDMConexao.pas' {DmConexao: TDataModule},
+  untDMCliente in 'Dao\untDMCliente.pas' {DMCliente: TDataModule};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TDmConexao, DmConexao);
+  Application.Run;
+end.

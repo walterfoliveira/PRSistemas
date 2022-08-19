@@ -1,0 +1,36 @@
+unit uCliente;
+
+interface
+
+type
+
+  TCliente = class
+  private
+    { private declarations }
+  protected
+    { protected declarations }
+
+    FId: Integer;
+    FNome: String;
+    FNomeMae: String;
+    FNomePai: String;
+    FCpf: String;
+    FRg: String;
+
+  public
+    { public declarations }
+
+    property Id: Integer read GetId write SetId;
+    property Nome: String read GetNome write SetNome;
+    property NomeMae: String read GetNomeMae write SetNomeMae;
+    property NomePai: String read GetNomePai write SetNomePai;
+    property Cpf: String read GetCpf write SetCpf;
+    property Rg: String read GetRg write SetRg;
+
+  published
+    { published declarations }
+  end;
+
+implementation
+
+end.

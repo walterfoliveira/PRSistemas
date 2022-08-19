@@ -1,0 +1,864 @@
+unit Funcoes;
+
+interface
+
+uses
+  IdURI,
+  System.SysUtils,
+  System.Math,
+  System.DateUtils,
+  System.StrUtils,
+  System.Zip,
+  System.MaskUtils,
+
+  FMX.WebBrowser,
+  FMX.Forms,
+  FMX.StdCtrls,
+  FMX.Edit,
+
+  System.Types, System.UITypes, System.Classes, System.Variants,
+
+  System.Net.HttpClient,
+  IdHTTP,
+
+  FMX.Types, FMX.Controls, FMX.Graphics, FMX.Dialogs,
+  FMX.Controls.Presentation, FMX.Objects,
+
+  IdHashMessageDigest,
+
+  FMX.ListView,
+  FMX.SearchBox,
+
+
+  System.IOUtils,
+{$IFDEF IOS}
+  Macapi.Helpers, iOSapi.Foundation, FMX.Helpers.iOS, FMX.Platform.iOS,
+{$ENDIF IOS}
+
+{$IFDEF MSWINDOWS}
+  ComObj,
+  ActiveX,
+  WinAPI.ShellApi, WinAPI.Windows,
+{$ENDIF}
+
+{$IFDEF ANDROID}
+    FMX.Platform.Android,
+    FMX.Helpers.Android,
+    Androidapi.JNI.GraphicsContentViewText,
+    AndroidApi.Helpers,
+    Androidapi.JNI.Telephony,
+    Androidapi.JNI.Provider,
+    Androidapi.JNIBridge,
+    Androidapi.JNI.JavaTypes,
+    Androidapi.JNI.Os,
+    Androidapi.JNI.Net,
+    Androidapi.jNI.App,
+    IdGlobalProtocols,
+    Androidapi.IOUtils,
+  {$ENDIF}
+
+ IdTCPClient, Constantes;
+
+function RemoveAcentos2(const pText: string): string;
+function RemoveAcentos(Str:String): String;
+function ValidaCPF(const ACPF: String): Boolean;
+function GerarChavePrivadoToken: String;
+function VerificarDataHora(Const aDataHoraINI: TDateTime; Const aDataHoraFIM: TDateTime): String;
+function CheckInternet(AHost: string; APort: integer): Boolean;
+function getCelular_IMEI: String;
+function buscaGet_IMEI: string;
+procedure PreencherSearchListview(List: TListView; Texto: String);
+procedure pLabelEdit(xForm :TForm ; xLabel:TLabel; xText, xAcao :String; xEdit :TEdit);
+
+function Compactar(AZipFile, AFileName: string): Boolean;
+procedure Descompactar(AZipFile: string);
+
+function buscar_NumeroTelefone: String;
+function Get_Versao(VersioCode: Boolean): String;
+
+function SomenteNumero(snum : String) : String;
+function VerificarServidorOnLine: Boolean;
+
+function FormataCEP(CEP: string): string;
+function FormatCPFCNPJ ( CPFCNPJ : String ) : String;
+function FormatarTelefone(Telefone : string): string;
+
+function OpenURLorFile(URL: string; const DisplayError: Boolean = False): Boolean;
+
+function ValidarEMail(aStr: string): Boolean;
+
+function RGBtoAlphacolors(R, G, B: string) : TAlphaColor;
+
+procedure EnviarMSG_WhatssApp(iMensagem: String; iNumero: String);
+
+function ApplyMask(aMask, aValue: String): String;
+
+function OpenURL(const URL: string; const DisplayError: Boolean = False): Boolean;
+
+function MD5(texto: string): string;
+
+//procedure VibrateDevice(milliseconds: cardinal);
+
+
+{$IFDEF IOS}
+type
+  TCloseParentFormHelper = class
+  public
+    procedure OnClickClose(Sender: TObject);
+  end;
+{$ENDIF IOS}
+
+implementation
+
+
+function MD5(texto: string): string;
+var
+  idmd5: TIdHashMessageDigest5;
+begin
+  idmd5 := TIdHashMessageDigest5.Create;
+  try
+    Result := idmd5.HashStringAsHex(texto);
+  finally
+    idmd5.Free;
+  end;
+end;
+
+{$IFDEF IOS}
+procedure TCloseParentFormHelper.OnClickClose(Sender: TObject);
+begin
+  TForm(TComponent(Sender).Owner).Close();
+end;
+
+{$ENDIF IOS}
+
+function OpenURL(const URL: string; const DisplayError: Boolean = False): Boolean;
+{$IFDEF ANDROID}
+var
+  Intent: JIntent;
+begin
+// There may be an issue with the geo: prefix and URLEncode.
+// will need to research
+  Intent := TJIntent.JavaClass.init(TJIntent.JavaClass.ACTION_VIEW,
+    TJnet_Uri.JavaClass.parse(StringToJString(URL)));
+
+  try
+    SharedActivity.startActivity(Intent);
+    exit(true);
+  except
+    on e: Exception do
+    begin
+      if DisplayError then ShowMessage('Error: ' + e.Message);
+      exit(false);
+    end;
+  end;
+end;
+{$ELSE}
+{$IFDEF IOS}
+var
+  NSU                      : NSUrl;
+  OK                       : Boolean;
+  frm                      : TForm;
+  WebBrowser               : TWebBrowser;
+  btn                      : TButton;
+  btnShare                 : TButton;
+  toolSuperior             : TToolBar;
+  Evnt                     : TCloseParentFormHelper;
+  tmpFile                  : String;
+
+  LSourceName, LDestName: string;
+begin
+  // iOS doesn't like spaces, so URL encode is important.
+
+//  NSU := StrToNSUrl(URL);
+//  if SharedApplication.canOpenURL(NSU) then
+//    exit(SharedApplication.openUrl(NSU))
+//  else
+//  begin
+//    if DisplayError then
+//      ShowMessage('Error: Opening "' + URL + '" not supported.');
+//    exit(false);
+//  end;
+
+
+  Frm                      := TForm.CreateNew(nil);
+  toolSuperior             := TToolBar.Create(frm);
+  toolSuperior.Align       := TAlignLayout.Top;
+  toolSuperior.StyleLookup := 'toolbarstyle';
+  toolSuperior.Parent      := frm;
+  {Botão Back}
+  btn                      := TButton.Create(frm);
+  btn.Align                := TAlignLayout.Left;
+  btn.Margins.Left         := 8;
+  btn.StyleLookup          := 'backtoolbutton';
+  btn.Text                 := 'Voltar';
+  btn.Parent               := toolSuperior;
+  WebBrowser               := TWebBrowser.Create(frm);
+  WebBrowser.Parent        := frm;
+  WebBrowser.Align         := TAlignLayout.Client;
+  evnt                     := TCloseParentFormHelper.Create;
+  btn.OnClick              := evnt.OnClickClose;
+//  if AExternalURL then
+//  begin
+//    //tmpFile := StringReplace(APDFFileName, ' ', '%20', [rfReplaceAll]);
+//    WebBrowser.Navigate(APDFFileName);
+//  end
+//  else
+
+
+  WebBrowser.Navigate('http://rwconsultoria.ddns.net:8881/img/arquivos/' + URL);
+
+  //vamos copiar arquivo original para um temp
+
+  // Bit of a "hack" to get the exact paths of the pdf files deployed to /Contents/Resources/Startup
+  //LSourceName := URL; //Origem
+  //LDestName := TPath.Combine(TPath.GetTempPath, ExtractFileName(URL));
+  //ShowMessage('Arquivos: ' + #13 +  LSourceName + #13 + LDestName);
+
+  // Delete any existing temp file
+//  if (tfile.Exists(LDestName)) then
+//  begin
+//   TFile.Delete(LDestName);
+//   ShowMessage('excluido: ' + #13 + LDestName);
+//  end;
+
+//  if (tfile.Exists(LSourceName)) then
+//   ShowMessage('Arquivo existe: ' + #13 + LSourceName)
+//  else
+//   ShowMessage('Arquivo nao existe: ' + #13 + LSourceName);
+
+  // Copy from resources to common location
+  //TFile.Copy(LSourceName, LDestName, true);
+  //ShowMessage('Arquivo copiado: ' + #13 + LDestName);
+
+//  if (tfile.Exists(LDestName)) then
+//   ShowMessage('Arquivo destino existe: ' + #13 + LDestName)
+//  else
+//   ShowMessage('Arquivo destino nao existe: ' + #13 + LSourceName);
+
+
+  //WebBrowser.Navigate('file://' + LDestName);
+
+  frm.ShowModal();
+
+
+end;
+{$ELSE}
+{$IFDEF MSWINDOWS}
+begin
+  ShellExecute(0, 'OPEN', PWideChar(URL), nil, nil, SW_SHOWNORMAL);
+end;
+{$ELSE}
+{$IFDEF MACOS}
+begin
+  _system(PAnsiChar('open ' + AnsiString(URL)));
+end;
+{$ELSE}
+begin
+  raise Exception.Create('Not supported!');
+end;
+{$ENDIF MACOS}
+{$ENDIF MSWINDOWS}
+{$ENDIF IOS}
+{$ENDIF ANDROID}
+
+
+(*
+procedure VibrateDevice(milliseconds: cardinal);
+{$IFDEF ANDROID}
+Var
+  Vibrator:JVibrator;
+{$ENDIF}
+begin
+{$IFDEF ANDROID}
+  Vibrator:=TJVibrator.Wrap((SharedActivityContext.getSystemService(TJContext.JavaClass.VIBRATOR_SERVICE) as ILocalObject).GetObjectID);
+  // Vibrate for 500 milliseconds
+  if milliseconds <= 0 then
+   milliseconds:= 500;
+
+  Vibrator.vibrate(milliseconds);
+
+{$ENDIF}
+{$IFDEF IOS}
+  AudioServicesPlaySystemSound( kSystemSoundID_vibrate );
+{$ENDIF}
+end;
+*)
+
+function ApplyMask(aMask, aValue: String): String;
+Var
+   M, V  : Integer;
+   Texto : String;
+begin
+{ //Como usar
+  // para formatar um número de telefone, substituímos o evento OnTyping pelo a seguir:
+
+  TThread.Queue(Nil,
+   Procedure
+   begin
+   Edit1.Text := ApplyMask('(##) #.####-####', Edit1.Text);
+   Edit1.CaretPosition := Edit1.Text.Length;
+   End);
+
+
+}
+ Result := '';
+ Texto  := '';
+ aMask  := aMask.ToUpper;
+ for V := 0 to aValue.Length-1 do
+  if aValue.Chars[V] In ['0'..'9'] Then
+   Texto := Texto + aValue.Chars[V];
+  M := 0;
+  V := 0;
+  while (V < Texto.Length) And (M < aMask.Length) do
+  Begin
+   While aMask.Chars[M] <> '#' Do
+   Begin
+    Result := Result + aMask.Chars[M];
+    Inc(M);
+   End;
+   Result := Result + Texto.Chars[V];
+   Inc(M);
+   Inc(V);
+  End;
+
+end;
+
+
+
+procedure EnviarMSG_WhatssApp(iMensagem: String; iNumero: String);
+var
+        mensagem : string;
+        ret : boolean;
+
+{$IFDEF ANDROID}
+        IntentWhats : JIntent;
+{$ENDIF ANDROID}
+
+{$IFDEF IOS}
+   //     NSU: NSUrl;
+{$ENDIF IOS}
+begin
+
+  mensagem := iMensagem;
+  mensagem := 'https://api.whatsapp.com/send?phone='+ iNumero +'&text=' + mensagem;
+
+  {$IFDEF ANDROID}
+    IntentWhats := TJIntent.JavaClass.init(TJIntent.JavaClass.ACTION_SEND);
+    IntentWhats.setType(StringToJString('text/plain'));
+    IntentWhats.putExtra(TJIntent.JavaClass.EXTRA_TEXT, StringToJString(mensagem));
+    IntentWhats.setPackage(StringToJString('com.whatsapp'));
+    SharedActivity.startActivity(IntentWhats);
+  {$ENDIF ANDROID}
+
+  {$IFDEF IOS}
+    //NSU := StrToNSUrl(TIdURI.URLEncode(mensagem));
+  //  NSU := StrToNSUrl(TURI.URLEncode(mensagem));
+ //   SharedApplication.openUrl(NSU);
+  {$ENDIF IOS}
+end;
+
+
+
+function RGBtoAlphacolors(R, G, B: string) : TAlphaColor;
+var
+rec: TAlphaColorRec;
+begin
+  rec.A := $FF;
+  rec.R := strtoint('$'+R);
+  rec.G := strtoint('$'+G);
+  rec.B := strtoint('$'+B);
+
+  result := rec.Color;
+end;
+
+function VerificarServidorOnLine: Boolean;
+begin
+ result:= False;
+ result:= CheckInternet('www.google.com', 80);
+ if Result then
+  result:= CheckInternet(C_Servidor, C_Porta.ToInteger);
+end;
+
+function SomenteNumero(snum : String) : String;
+VAR s1, s2: STRING;
+  i: Integer;
+BEGIN
+  if snum = EmptyStr then
+  begin
+   result:= '';
+   exit;
+  end;
+  s1 := snum;
+  s2 := '';
+  FOR i := 0 TO Length(s1) DO
+    IF s1[i] IN ['0'..'9'] THEN
+      s2 := s2 + s1[i];
+  result := s2;
+End;
+
+function FormatCPFCNPJ ( CPFCNPJ : String ) : String;
+var
+
+   FormatarCNPJ:String;
+
+   FormatarCPF:String;
+
+begin
+  CPFCNPJ := SomenteNumero(CPFCNPJ); //Remove qualquer formatação que o usuário possa ter colocado.
+
+  if Length(CPFCNPJ) <>  0 then
+  begin
+
+    if Length(CPFCNPJ) = 14 then begin
+
+       FormatarCNPJ:= Copy(CPFCNPJ, 1,2)
+
+            + '.' + Copy(CPFCNPJ, 3,3)
+
+            +'.' + Copy(CPFCNPJ, 6,3)
+
+            + '/' +Copy(CPFCNPJ, 9,4)
+
+            + '-' + Copy(CPFCNPJ, 13,2);
+
+             Result := FormatarCNPJ;
+
+
+    end else begin
+
+      if Length(CPFCNPJ) = 11 then   begin
+
+            FormatarCPF:= Copy(CPFCNPJ, 1,3)
+
+            + '.' + Copy(CPFCNPJ, 4,3)
+
+            + '.' + Copy(CPFCNPJ,7,3)
+
+            + '-' + Copy(CPFCNPJ, 10,2);
+
+            Result := FormatarCPF
+    end;
+   end;
+  end;
+end;
+
+function FormataCEP(CEP: string): string;
+var
+  I: integer;
+begin
+  Result := '';
+  CEP:= SomenteNumero(CEP); //Remove qualquer formatação que o usuário possa ter colocado.
+
+  for I := 0 to Length(CEP) do
+  begin
+    if CEP[I] in ['0'..'9'] then
+      Result := Result + CEP[I];
+   //if Length(Result) <> 8 then
+   //  if Result <> '' then
+   //    raise Exception.Create('CEP inválido.')
+   //except
+   // raise exception.create('CEP inválido');
+  end;
+
+  if Length(Result) = 8 then
+  begin
+  if Result <> '' then
+    Result := Copy(Result, 1, 2) + '' +
+              Copy(Result, 3, 3) + '-' +
+              Copy(Result, 6, 3);
+  end;
+
+end;
+
+function FormatarTelefone(Telefone : string): string;
+var sTel : String;
+    bZero : Boolean;
+    iDigitos : Integer;
+begin
+   //Obs: mascara prevê tratamento apenas para números brasileiros
+   //Obs2: Esta função não leva em conta o código do país (Ex: 55, ou +55)
+   sTel := SomenteNumero(Telefone); //Remove qualquer formatação que o usuário possa ter colocado.
+   if sTel='' then
+    Result := ''
+   else
+   begin
+     if sTel[1]='0' then //Verifica se foi adicionado o 0 no início do número
+     begin
+       bZero:= True;
+       sTel := Trim( copy(sTel,2,Length(sTel)) ); //Remove para fazer a formatação depois adiciona
+     end
+     else
+       bZero := False;
+     iDigitos := Length(sTel);
+     //Formata de acordo com a quantidade de números encontrados.
+     case iDigitos of
+       8 : Result := FormatMaskText('9999-9999;0;_',sTel); //8 digitos SEM DDD (ex: 34552318)
+       9 : Result := FormatMaskText('9 9999-9999;0;_',sTel); //9 digitos SEM DDD (ex: 991916889)
+      10 : Result := FormatMaskText('(99) 9999-9999;0;_',sTel); //8 Digitos (convencional, ex: 7734552318)
+      11 : Result := FormatMaskText('(99) 9 9999-9999;0;_',sTel); //9 Digitos (novos números, ex: 77991916889)
+      12 : Result := FormatMaskText('99(99)9999-9999;0;_',sTel); //Se foram 12 digitos possívelmente digitou a operadora também
+      13 : Result := FormatMaskText('99(99)9 9999-9999;0;_',sTel); //Se foram 13 digitos possívelmente digitou a operadora também
+     else
+       Result := Telefone; //Mantém na forma que o usuário digitou
+     end;
+     if bZero then //Para ficar com a preferência do usuário, se ele digitou o "0" eu mantenho.
+       Result := '0'+Result;
+   end;
+end;
+
+function RemoveAcentos2(const pText: string): string;
+type
+  USAscii20127 = type AnsiString(20127);
+begin
+  Result := string(USAscii20127(pText));
+end;
+
+Function RemoveAcentos(Str:String): String;
+{Remove caracteres acentuados de uma string}
+Const ComAcento = 'àâêôûãõáéíóúçüÀÂÊÔÛÃÕÁÉÍÓÚÇÜ';
+  SemAcento = 'aaeouaoaeioucuAAEOUAOAEIOUCU';
+Var
+x : Integer;
+Begin
+if (Str = EmptyStr) then
+ exit;
+
+For x := 0 to Length(Str) do
+  Begin
+  if Pos(Str[x],ComAcento)<>0 Then
+  begin
+  Str[x] := SemAcento[Pos(Str[x],ComAcento)];
+  end;
+  end;
+Result := Str;
+end;
+
+function Get_Versao(VersioCode: Boolean): String;
+   {$IFDEF ANDROID}
+      var PkgInfo : JPackageInfo;
+   {$ENDIF}
+begin
+   Result:= '0.0.0.0';
+   {$IFDEF ANDROID}
+      PkgInfo := TAndroidHelper.Activity.GetPackageManager.GetPackageInfo(TAndroidHelper.Activity.getPackageName, 0);
+      //Lbl_Versao.Text := 'Versão: ' + JStringToString(PkgInfo.packageName) + ' ' + JStringToString(PkgInfo.versionName) + ' ' + IntToStr(PkgInfo.versionCode);
+      //Result:= JStringToString(PkgInfo.versionName) + ' Version Code: ' + IntToStr(PkgInfo.versionCode);
+      Result:= IntToStr(PkgInfo.versionCode);
+      if not VersioCode then
+       Result:= JStringToString(PkgInfo.versionName);
+   {$ENDIF}
+end;
+
+function Compactar(AZipFile, AFileName: string): Boolean;
+var
+  z: TZipFile;
+begin
+  result := false;
+  z := TZipFile.Create;
+
+  try
+    if fileExists(AZipFile) then
+      z.Open(AZipFile, zmReadWrite)
+    else
+      z.Open(AZipFile, zmWrite);
+    z.Add(AFileName, extractFileName(AFileName));
+    z.Close;
+    result := true;
+  finally
+    z.Free;
+  end;
+end;
+
+procedure Descompactar(AZipFile: string);
+var
+  z: TZipFile;
+begin
+  z := TZipFile.Create;
+  try
+    if fileExists(AZipFile) then
+      z.Open(AZipFile, zmRead)
+    else
+      raise Exception.Create('ZipFileDecompress Arquivo não encontrado');
+    z.ExtractAll(ExtractFilePath(AZipFile));
+    z.Close;
+  finally
+    z.Free;
+  end;
+end;
+
+function buscar_NumeroTelefone: String;
+{$IFDEF ANDROID}
+var
+  TTelMgr: JTelephonyManager;
+{$ENDIF}
+begin
+ try
+  Result:= '';
+  {$IFDEF ANDROID}
+    TTelMgr := TJTelephonyManager.Wrap((SharedActivityContext.getSystemService(
+               TJContext.JavaClass.TELEPHONY_SERVICE) as ILocalObject).GetObjectID);
+    Result:= JStringToString(TTelMgr.getLine1Number);
+  {$ENDIF}
+ Except
+  Result:= '';
+ end;
+end;
+
+function buscaGet_IMEI: string;
+{$IFDEF ANDROID}
+ Var
+  obj: JObject;
+  tm: JTelephonyManager;
+  IMEI: String;
+{$ENDIF}
+begin
+Result:= '-0';
+{$IFDEF ANDROID}
+ result := JStringToString(TJBuild.JavaClass.SERIAL);
+  obj := SharedActivityContext.getSystemService(TJContext.JavaClass.TELEPHONY_SERVICE);
+  if obj <> nil then
+  begin
+    tm := TJTelephonyManager.Wrap( (obj as ILocalObject).GetObjectID );
+    if tm <> nil then
+      IMEI := JStringToString(tm.getDeviceId);
+  end;
+  if IMEI = '' then
+      IMEI := JStringToString(TJSettings_Secure.JavaClass.getString(SharedActivity.getContentResolver, TJSettings_Secure.JavaClass.ANDROID_ID));
+
+  result:= IMEI;
+
+{$ENDIF}
+end;
+
+function getCelular_IMEI: String;
+begin
+  result := '';
+  {$IFDEF ANDROID}
+    result := JStringToString(TJBuild.JavaClass.SERIAL);
+  {$ENDIF}
+end;
+
+procedure PreencherSearchListview(List: TListView; Texto: String);
+var sb : TSearchBox;
+    i  : Integer;
+begin
+  Try
+    sb := nil;
+    for i := 0 to List.ComponentCount-1 do
+    begin
+      if (List.Components[i] is TSearchBox) then
+      begin
+        sb := ((List.Components[i]) as TSearchBox);
+        if (sb <> nil) then
+           sb.Text := Texto;
+        break;
+      end;
+    end;
+    if (sb <> nil) then
+      sb.Text := Texto;
+  Finally
+    sb.Free;// limparMemoriaObjeto(sb);
+  End;
+end;
+
+function CheckInternet(AHost: string; APort: integer): Boolean;
+var
+  IdTCPClient : TIdTCPClient;
+begin
+  Result := true;
+  exit;
+
+  Result := False;
+  try
+    try
+      IdTCPClient := TIdTCPClient.Create();
+      IdTCPClient.ReadTimeout := 2000;
+      IdTCPClient.ConnectTimeout := 2000;
+      IdTCPClient.Port := APort;
+      IdTCPClient.Host := AHost;
+      IdTCPClient.Connect;
+      IdTCPClient.Disconnect;
+      Result := True;
+    Except
+      on E:Exception do
+      begin
+        Result := False;
+      end;
+    end;
+  finally
+    IdTCPClient.DisposeOf;
+  end;
+end;
+
+function VerificarDataHora(Const aDataHoraINI: TDateTime; Const aDataHoraFIM: TDateTime): String;
+var
+ DataI: TDateTime;
+ DataF: TDateTime;
+ DifDias: double;
+begin
+Result:= '';
+DataI := aDataHoraINI;
+DataF := aDataHoraFIM;
+DifDias := DaySpan(DataF, DataI);
+
+//Result := FormatDateTime('h', DifDias).ToInteger;
+
+Result := FormatDateTime('h" horas e "n" minutos"', DifDias);//IntToStr(Trunc(DifDias)) + ' dias, ' +
+
+end;
+
+
+function GerarChavePrivadoToken: String;
+Var
+ Uid: TGuid;
+
+ ID: TGuid;
+begin
+  Result := 'ERRO GUID';
+  {$IFDEF MSWINDOWS}
+  CoCreateGuid(ID);
+  Result:= UpperCase(IntToStr(Length(GuidToString(ID))));
+  {$ENDIF}
+end;
+
+function ValidaCPF(const ACPF: String): Boolean;
+Var
+  d1, d4, xx, nCount, resto, digito1, digito2: integer;
+  Check: String;
+Begin
+  if (Length(ACPF) <> 11) then
+    Exit(False);
+
+  d1 := 0;
+  d4 := 0;
+  xx := 1;
+  for nCount := 1 to Length(ACPF) - 2 do
+  begin
+    if Pos(Copy(ACPF, nCount, 1), '/-.') = 0 then
+    begin
+      d1 := d1 + (11 - xx) * StrToInt(Copy(ACPF, nCount, 1));
+      d4 := d4 + (12 - xx) * StrToInt(Copy(ACPF, nCount, 1));
+      xx := xx + 1;
+    end;
+  end;
+  resto := (d1 mod 11);
+  if resto < 2 then
+  begin
+    digito1 := 0;
+  end
+  else
+  begin
+    digito1 := 11 - resto;
+  end;
+  d4 := d4 + 2 * digito1;
+  resto := (d4 mod 11);
+  if resto < 2 then
+  begin
+    digito2 := 0;
+  end
+  else
+  begin
+    digito2 := 11 - resto;
+  end;
+  Check := IntToStr(digito1) + IntToStr(digito2);
+  if Check <> Copy(ACPF, succ(Length(ACPF) - 2), 2) then
+  begin
+    Result := False;
+  end
+  else
+  begin
+    Result := True;
+  end;
+end;
+
+procedure pLabelEdit(xForm :TForm ;
+                          xLabel:TLabel;
+                          xText ,
+                          xAcao :String;
+                          xEdit :TEdit);
+begin
+  with xForm do
+  begin
+    if xAcao = 'enter' then
+    begin
+      xEdit.TextPrompt := '';
+      xLabel.Visible   := True;
+    end else begin
+      if xEdit.Text = '' then
+      begin
+        xEdit.TextPrompt := xText;
+        xLabel.Visible   := False;
+      end else begin
+        xLabel.Visible   := True;
+        xEdit.TextPrompt := '';
+      end;
+    end;
+  end;
+end;
+
+
+function OpenURLorFile(URL: string; const DisplayError: Boolean = False): Boolean;
+// {$IFDEF MSWINDOWS}
+// begin
+//  ShellExecute(0, 'OPEN', PChar(URL), '', '', SW_SHOWNORMAL);
+// end;
+// {$ENDIF}
+
+ {$IFDEF ANDROID}
+var
+  Intent: JIntent;
+  idMimeTable: TIdMimeTable;
+ {$ENDIF ANDROID}
+begin
+
+{$IFDEF ANDROID}
+// There may be an issue with the geo: prefix and URLEncode.
+// will need to research
+  //if URl.toLower.StartsWith('http://') then
+  if URl.toLower.StartsWith('https://') then
+    Begin
+      Intent := TJIntent.JavaClass.init(TJIntent.JavaClass.ACTION_VIEW,
+      TJnet_Uri.JavaClass.parse(StringToJString(TIdURI.URLEncode(URL))));
+    End
+  Else
+    Begin
+     try
+       idMimeTable := TidMimeTable.Create;
+       Intent := TJIntent.Create;
+       Intent.setAction(TJIntent.JavaClass.ACTION_VIEW);
+       if not url.ToLower.StartsWith('file://') then
+         url := 'file://' + url;
+       Intent.setDataAndType(StrToJURI(Url), StringToJString(idMimeTable.GetFileMIMEType(Url)));
+     Finally
+       try idMimeTable.Free; except end;
+     End;
+
+    End;
+  try
+    SharedActivity.startActivity(Intent);
+    exit(true);
+  except
+    on e: Exception do
+    begin
+     // if DisplayError then ShowMessage('Error: ' + e.Message);
+      exit(false);
+    end;
+  end;
+
+{$ENDIF ANDROID}
+end;
+
+function ValidarEMail(aStr: string): Boolean;
+
+begin
+ aStr := Trim(UpperCase(aStr));
+ if Pos('@', aStr) > 1 then
+ begin
+   Delete(aStr, 1, pos('@', aStr));
+   Result := (Length(aStr) > 0) and (Pos('.', aStr) > 2);
+ end
+ else
+   Result := False;
+end;
+
+end.

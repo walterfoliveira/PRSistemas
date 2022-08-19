@@ -1,0 +1,110 @@
+unit uCliente;
+
+interface
+
+type
+
+  TCliente = class
+  private
+    function GetCpf: String;
+    function GetId: Integer;
+    function GetNome: String;
+    function GetNomeMae: String;
+    function GetNomePai: String;
+    function GetRg: String;
+    procedure SetCpf(const Value: String);
+    procedure SetId(const Value: Integer);
+    procedure SetNome(const Value: String);
+    procedure SetNomeMae(const Value: String);
+    procedure SetNomePai(const Value: String);
+    procedure SetRg(const Value: String);
+    { private declarations }
+  protected
+    { protected declarations }
+
+    FId: Integer;
+    FNome: String;
+    FNomeMae: String;
+    FNomePai: String;
+    FCpf: String;
+    FRg: String;
+
+  public
+    { public declarations }
+
+    property Id: Integer read GetId write SetId;
+    property Nome: String read GetNome write SetNome;
+    property NomeMae: String read GetNomeMae write SetNomeMae;
+    property NomePai: String read GetNomePai write SetNomePai;
+    property Cpf: String read GetCpf write SetCpf;
+    property Rg: String read GetRg write SetRg;
+
+  published
+    { published declarations }
+  end;
+
+implementation
+
+{ TCliente }
+
+function TCliente.GetCpf: String;
+begin
+
+end;
+
+function TCliente.GetId: Integer;
+begin
+
+end;
+
+function TCliente.GetNome: String;
+begin
+
+end;
+
+function TCliente.GetNomeMae: String;
+begin
+
+end;
+
+function TCliente.GetNomePai: String;
+begin
+
+end;
+
+function TCliente.GetRg: String;
+begin
+
+end;
+
+procedure TCliente.SetCpf(const Value: String);
+begin
+
+end;
+
+procedure TCliente.SetId(const Value: Integer);
+begin
+
+end;
+
+procedure TCliente.SetNome(const Value: String);
+begin
+
+end;
+
+procedure TCliente.SetNomeMae(const Value: String);
+begin
+
+end;
+
+procedure TCliente.SetNomePai(const Value: String);
+begin
+
+end;
+
+procedure TCliente.SetRg(const Value: String);
+begin
+
+end;
+
+end.

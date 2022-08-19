@@ -1,0 +1,25 @@
+unit uCliente;
+
+interface
+
+type
+
+  TTUsuario = class
+    private
+
+    { private declarations }
+  protected
+    { protected declarations }
+  public
+    { public declarations }
+  published
+    { published declarations }
+    property ID       	: string read FID;
+    property Nome   	: string read FNome;
+    property Login     : string read FLogin;
+    property Senha    : string read FSenha;
+    property PerfilID  : Integer read FPerfilID;
+  end;
+  end;
+
+end.

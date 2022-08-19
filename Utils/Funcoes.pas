@@ -1,0 +1,98 @@
+unit Funcoes;
+
+interface
+
+uses
+  IdURI,
+  System.SysUtils,
+  System.Math,
+  System.DateUtils,
+  System.StrUtils,
+  System.Zip,
+  System.MaskUtils,
+  System.JSON,
+  REST.Client,
+
+  System.Net.HttpClient, System.Classes;
+
+function BuscarCEPNoViaCEP(Cep: string): TStringList;
+function SomenteNumero(snum : String) : String;
+
+implementation
+
+function SomenteNumero(snum : String) : String;
+VAR s1, s2: STRING;
+  i: Integer;
+BEGIN
+  if snum = EmptyStr then
+  begin
+   result:= '';
+   exit;
+  end;
+  s1 := snum;
+  s2 := '';
+  FOR i := 0 TO Length(s1) DO
+    IF s1[i] IN ['0'..'9'] THEN
+      s2 := s2 + s1[i];
+  result := s2;
+End;
+
+function BuscarCEPNoViaCEP(Cep: string): TStringList;
+var
+  data: TJSONObject;
+  RESTClient1: TRESTClient;
+  RESTRequest1: TRESTRequest;
+  RESTResponse1: TRESTResponse;
+  Endereco: TStringList;
+begin
+  RESTClient1 := TRESTClient.Create(nil);
+  RESTRequest1 := TRESTRequest.Create(nil);
+  RESTResponse1 := TRESTResponse.Create(nil);
+  RESTRequest1.Client := RESTClient1;
+  RESTRequest1.Response := RESTResponse1;
+  RESTClient1.BaseURL := 'https://viacep.com.br/ws/' + Cep + '/json';
+  RESTRequest1.Execute;
+  data := RESTResponse1.JSONValue as TJSONObject;
+  try
+    Endereco := TStringList.Create;
+    if Assigned(data) then
+    begin
+        try
+          Endereco.Add(data.Values['logradouro'].Value);
+        except
+          on Exception do
+            Endereco.Add('');
+        end;
+        try
+          Endereco.Add(data.Values['bairro'].Value);
+        except
+         on Exception do
+           Endereco.Add('');
+        end;
+        try
+          Endereco.Add(data.Values['uf'].Value);
+        except
+         on Exception do
+           Endereco.Add('');
+        end;
+        try
+          Endereco.Add(data.Values['localidade'].Value);
+        except
+         on Exception do
+           Endereco.Add('');
+        end;
+        try
+          Endereco.Add(data.Values['complemento'].Value);
+        except
+         on Exception do
+           Endereco.Add('');
+        end;
+      end;
+  finally
+    FreeAndNil(data);
+  end;
+  Result := Endereco;
+end;
+
+
+end.

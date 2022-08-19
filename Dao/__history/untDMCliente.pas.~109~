@@ -1,0 +1,322 @@
+unit untDMCliente;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, Data.DB,
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, uCliente, Datasnap.Provider,
+  Datasnap.DBClient;
+
+type
+  TGetIdTabela = (tbCliente, tbEndereco);
+
+  TDMCliente = class(TDataModule)
+  private
+    { Private declarations }
+
+    function GetID(Tabela: TGetIdTabela): Integer;
+    function Insert(Cliente: TCliente; out Erro: String): Boolean;
+    function Update(Cliente: TCliente; out Erro: String): Boolean;
+
+  public
+    { Public declarations }
+
+    function GetCliente(Id: Integer; out Erro: String): TCliente;
+    function InsertUpdate(Cliente: TCliente; out Erro: String): Boolean;
+    function Delete(Id: Integer; out Erro: String): Boolean;
+
+  end;
+
+var
+  DMCliente: TDMCliente;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+uses untDMConexao;
+
+{$R *.dfm}
+{ TDataModule1 }
+
+function TDMCliente.InsertUpdate(Cliente: TCliente; out Erro: String): Boolean;
+begin
+  if (Cliente.Id = 0) then
+    Result := Insert(Cliente, Erro)
+  else
+    Result := Update(Cliente, Erro);
+end;
+
+function TDMCliente.GetID(Tabela: TGetIdTabela): Integer;
+Var
+  qryTemp: TFDQuery;
+begin
+  qryTemp := TFDQuery.Create(DMConexao.FDConexao);
+  try
+    qryTemp.Connection := DMConexao.FDConexao;
+
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    if (Tabela = TGetIdTabela.tbCliente) then
+      qryTemp.SQL.Add('Select Coalesce(Max(ID), 0) as ID from dbo.cliente')
+    else
+      qryTemp.SQL.Add('Select Coalesce(Max(ID), 0) as ID from dbo.endereco');
+    qryTemp.Open();
+
+    Result := qryTemp.FieldByName('ID').AsInteger;
+  finally
+    qryTemp.Close;
+    qryTemp.Free;
+    DMConexao.FDConexao.Close;
+  end;
+end;
+
+function TDMCliente.GetCliente(Id: Integer; out Erro: String): TCliente;
+Var
+  qryTemp: TFDQuery;
+  cli: TCliente;
+  endCliente: TEndereco;
+begin
+  qryTemp := TFDQuery.Create(DMConexao.FDConexao);
+  cli := TCliente.Create();
+  endCliente := TEndereco.Create();
+
+  try
+    qryTemp.Connection := DMConexao.FDConexao;
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    qryTemp.SQL.Add
+      ('Select Cli.*, EndCli.Id as EnderecoID, EndCli.Endereco, EndCli.Num, EndCli.Cidade, EndCli.Estado, EndCli.Cep from dbo.cliente Cli');
+    qryTemp.SQL.Add
+      ('Left Join dbo.Endereco EndCli on Cli.Id = EndCli.IdCliente');
+    qryTemp.SQL.Add('Where Cli.Id = ' + IntToStr(Id));
+
+    try
+
+      qryTemp.Open();
+      if qryTemp.IsEmpty then
+      begin
+        Erro := 'Cliente não encontrado [' + Id.ToString + ']';
+        Result := nil;
+      end;
+
+      // Prenche OBJ Cliente
+      cli.Id := qryTemp.FieldByName('Id').AsInteger;
+      cli.Nome := qryTemp.FieldByName('Nome').AsString;
+      cli.NomeMae := qryTemp.FieldByName('NomeMae').AsString;
+      cli.NomePai := qryTemp.FieldByName('NomePai').AsString;
+      cli.Cpf := qryTemp.FieldByName('Cpf').AsString;
+      cli.Rg := qryTemp.FieldByName('Rg').AsString;
+
+      // Prenche OBJ Endereco
+      endCliente.Id := qryTemp.FieldByName('EnderecoID').AsInteger;
+      endCliente.IdCliente := qryTemp.FieldByName('Id').AsInteger;
+      endCliente.Endereco := qryTemp.FieldByName('Endereco').AsString;
+      endCliente.Numero := qryTemp.FieldByName('Num').AsString;
+      endCliente.Cidade := qryTemp.FieldByName('Cidade').AsString;
+      endCliente.Estado := qryTemp.FieldByName('Estado').AsString;
+      endCliente.Cep := qryTemp.FieldByName('Cep').AsString;
+
+      // Seta Endereco no OBJ Cliente
+      cli.endCliente := endCliente;
+
+      Result := cli;
+
+    except
+      on E: Exception do
+      begin
+        Erro := 'Erro ao Pesquisar no GetCliente[' + Id.ToString + ']:' + #13 +
+          E.Message;
+        Result := nil;
+      end;
+    end;
+
+  finally
+    qryTemp.Close;
+    qryTemp.Free;
+    DMConexao.FDConexao.Close;
+  end;
+end;
+
+function TDMCliente.Insert(Cliente: TCliente; out Erro: String): Boolean;
+Var
+  qryTemp: TFDQuery;
+  IdCliente: Integer;
+begin
+  qryTemp := TFDQuery.Create(DMConexao.FDConexao);
+  try
+    qryTemp.Connection := DMConexao.FDConexao;
+
+    // Persist Cliente
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    qryTemp.SQL.Add
+      ('Insert into dbo.cliente(nome, nomeMae, nomePai, cpf, rg) values (:Id, :Nome, :NomeMae, :NomePai, :Cpf, :Rg)');
+
+    qryTemp.ParamByName('Nome').AsString := Cliente.Nome;
+    qryTemp.ParamByName('NomeMae').AsString := Cliente.NomeMae;
+    qryTemp.ParamByName('NomePai').AsString := Cliente.NomePai;
+    qryTemp.ParamByName('Cpf').AsString := Cliente.Cpf;
+    qryTemp.ParamByName('Rg').AsString := Cliente.Rg;
+
+    try
+      qryTemp.ExecSQL();
+
+      IdCliente := 0;
+      if (qryTemp.RowsAffected > 0) then
+        IdCliente := GetID(TGetIdTabela.tbCliente);
+
+    except
+      on E: Exception do
+      begin
+        Erro := 'Erro ao tentar Inserir Cliente :' + #13 + E.Message;
+        Result := false;
+      end;
+    end;
+
+    if (qryTemp.RowsAffected = 0) then
+    begin
+        Erro := 'Erro ao tentar Inserir Cliente';
+        Result := false;
+    end;
+
+    // Persist Endereco do Cliente
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    qryTemp.SQL.Add
+      ('Insert into dbo.endereco(idCliente, Endereco, num, cidade, estado, cep) values (:Id, :IdCliente, :Endereco, :Num, :Cidade, :Estado, :Cep)');
+
+    //qryTemp.ParamByName('Id').AsInteger := GetID(TGetIdTabela.tbEndereco);
+    qryTemp.ParamByName('IdCliente').AsInteger := IdCliente;
+    qryTemp.ParamByName('Endereco').AsString := Cliente.endCliente.Endereco;
+    qryTemp.ParamByName('Num').AsString := Cliente.endCliente.Numero;
+    qryTemp.ParamByName('Cidade').AsString := Cliente.endCliente.Cidade;
+    qryTemp.ParamByName('Estado').AsString := Cliente.endCliente.Estado;
+    qryTemp.ParamByName('Cep').AsString := Cliente.endCliente.Cep;
+
+    try
+      qryTemp.ExecSQL();
+      Result := qryTemp.RowsAffected > 0;
+    except
+      on E: Exception do
+      begin
+        Erro := 'Erro ao tentar Inserir Endereço do Cliente :' + #13 +
+          E.Message;
+        Result := false;
+      end;
+    end;
+
+
+    // Aqui pode se verificar se foi feito com sucesso: Cliente, Endereco (caso contrario poderia se excluir: e retornar erro para View
+    // TODO: fazer validação de entrada do registro: Cliente, Endereco
+
+  finally
+    qryTemp.Close;
+    qryTemp.Free;
+    DMConexao.FDConexao.Close;
+  end;
+
+end;
+
+function TDMCliente.Update(Cliente: TCliente; out Erro: String): Boolean;
+Var
+  qryTemp: TFDQuery;
+begin
+  qryTemp := TFDQuery.Create(DMConexao.FDConexao);
+  try
+    qryTemp.Connection := DMConexao.FDConexao;
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    qryTemp.SQL.Add
+      ('Update dbo.cliente Set nome =:Nome, nomeMae = :NomeMae, nomePai = :NomePai, cpf = :Cpf, rg = :Rg Where Id = :Id');
+
+    qryTemp.ParamByName('Id').AsInteger := Cliente.Id;
+
+    qryTemp.ParamByName('Nome').AsString := Cliente.Nome;
+    qryTemp.ParamByName('NomeMae').AsString := Cliente.NomeMae;
+    qryTemp.ParamByName('NomePai').AsString := Cliente.NomePai;
+    qryTemp.ParamByName('Cpf').AsString := Cliente.Cpf;
+    qryTemp.ParamByName('Rg').AsString := Cliente.Rg;
+
+    try
+
+      qryTemp.ExecSQL();
+      Result := qryTemp.RowsAffected > 0;
+
+    except
+      on E: Exception do
+      begin
+        Erro := 'Erro ao tentar Atualizar :' + #13 + E.Message;
+        Result := false;
+      end;
+    end;
+
+    // Persist Endereco do Cliente
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    qryTemp.SQL.Add
+      ('Update dbo.endereco Set Endereco = :Endereco, num = :Num, cidade = :Cidade, estado = :Estado, cep = :Cep Where Id = :Id');
+
+    qryTemp.ParamByName('Id').AsInteger := Cliente.endCliente.Id;
+    qryTemp.ParamByName('Endereco').AsString := Cliente.endCliente.Endereco;
+    qryTemp.ParamByName('Num').AsString := Cliente.endCliente.Numero;
+    qryTemp.ParamByName('Cidade').AsString := Cliente.endCliente.Cidade;
+    qryTemp.ParamByName('Estado').AsString := Cliente.endCliente.Estado;
+    qryTemp.ParamByName('Cep').AsString := Cliente.endCliente.Cep;
+
+    try
+      qryTemp.ExecSQL();
+      Result := qryTemp.RowsAffected > 0;
+    except
+      on E: Exception do
+      begin
+        Erro := 'Erro ao tentar Atualizar Endereço do Cliente :' + #13 +
+          E.Message;
+        Result := false;
+      end;
+    end;
+
+  finally
+    qryTemp.Close;
+    qryTemp.Free;
+    DMConexao.FDConexao.Close;
+  end;
+
+end;
+
+function TDMCliente.Delete(Id: Integer; out Erro: String): Boolean;
+Var
+  qryTemp: TFDQuery;
+begin
+  qryTemp := TFDQuery.Create(DMConexao.FDConexao);
+  try
+    qryTemp.Connection := DMConexao.FDConexao;
+    qryTemp.Close;
+    qryTemp.SQL.Clear;
+    qryTemp.SQL.Add('Delete from dbo.cliente Where Id = :Id');
+    qryTemp.ParamByName('Id').AsInteger := Id;
+
+    try
+
+      qryTemp.ExecSQL();
+      Result := qryTemp.RowsAffected > 0;
+
+    except
+      on E: Exception do
+      begin
+        Erro := 'Erro ao tentar Excluir :' + #13 + E.Message;
+        Result := false;
+      end;
+    end;
+
+  finally
+    qryTemp.Close;
+    qryTemp.Free;
+    DMConexao.FDConexao.Close;
+  end;
+
+end;
+
+end.

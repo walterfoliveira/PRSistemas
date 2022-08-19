@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2022/08/18 09:03:00.000.875,=C:\Users\Valiant\Documents\Projetos Delphi\Unit1.pas</Transaction>
+    <Transaction>2022/08/18 09:03:35.000.086,C:\Users\Valiant\Documents\Projetos Delphi\Unit1.dfm=D:\Projetos\Delphi\Cliente\untPrincipal.dfm</Transaction>
+    <Transaction>2022/08/18 09:03:35.000.086,C:\Users\Valiant\Documents\Projetos Delphi\Unit1.pas=D:\Projetos\Delphi\Cliente\untPrincipal.pas</Transaction>
+    <Transaction>2022/08/18 09:03:45.000.164,C:\Users\Valiant\Documents\Projetos Delphi\Project1.dproj=D:\Projetos\Delphi\Cliente\PRSistemas.dproj</Transaction>
+    <Transaction>2022/08/18 09:05:38.000.374,=D:\Projetos\Delphi\Cliente\uDao.pas</Transaction>
+    <Transaction>2022/08/18 10:23:21.000.618,=D:\Projetos\Delphi\Cliente\Unit1.pas</Transaction>
+    <Transaction>2022/08/18 10:24:33.000.888,D:\Projetos\Delphi\Cliente\Unit1.pas=D:\Projetos\Delphi\Cliente\uCliente.pas</Transaction>
+    <Transaction>2022/08/18 12:23:10.000.049,D:\Projetos\Delphi\Cliente\uCliente.pas=</Transaction>
+    <Transaction>2022/08/18 12:23:12.000.849,D:\Projetos\Delphi\Cliente\uDao.pas=</Transaction>
+    <Transaction>2022/08/18 12:23:18.000.492,=D:\Projetos\Delphi\Cliente\Dao\uDao.pas</Transaction>
+    <Transaction>2022/08/18 12:23:24.000.843,=D:\Projetos\Delphi\Cliente\Model\uCliente.pas</Transaction>
+    <Transaction>2022/08/18 12:24:17.000.774,=D:\Projetos\Delphi\Cliente\Unit1.pas</Transaction>
+    <Transaction>2022/08/18 12:24:33.000.320,D:\Projetos\Delphi\Cliente\Unit1.pas=D:\Projetos\Delphi\Cliente\Controller\ClienteController.pas</Transaction>
+    <Transaction>2022/08/18 12:33:45.000.737,=D:\Projetos\Delphi\Cliente\Unit1.pas</Transaction>
+    <Transaction>2022/08/18 12:34:55.000.422,D:\Projetos\Delphi\Cliente\Unit1.dfm=D:\Projetos\Delphi\Cliente\Dao\untDMConexao.dfm</Transaction>
+    <Transaction>2022/08/18 12:34:55.000.422,D:\Projetos\Delphi\Cliente\Unit1.pas=D:\Projetos\Delphi\Cliente\Dao\untDMConexao.pas</Transaction>
+    <Transaction>2022/08/18 12:41:57.000.055,=D:\Projetos\Delphi\Cliente\Unit1.pas</Transaction>
+    <Transaction>2022/08/18 12:42:19.000.761,D:\Projetos\Delphi\Cliente\Unit1.dfm=D:\Projetos\Delphi\Cliente\Dao\untDMCliente.dfm</Transaction>
+    <Transaction>2022/08/18 12:42:19.000.761,D:\Projetos\Delphi\Cliente\Unit1.pas=D:\Projetos\Delphi\Cliente\Dao\untDMCliente.pas</Transaction>
+    <Transaction>2022/08/18 17:08:30.000.528,=D:\Projetos\Delphi\Cliente\Unit1.pas</Transaction>
+    <Transaction>2022/08/18 17:13:53.000.588,=D:\Projetos\Delphi\Cliente\Utils\Funcoes.pas</Transaction>
+    <Transaction>2022/08/19 13:38:22.000.068,=D:\Projetos\Delphi\Cliente\Unit1.pas</Transaction>
+    <Transaction>2022/08/19 13:39:09.000.752,D:\Projetos\Delphi\Cliente\Unit1.pas=D:\Projetos\Delphi\Cliente\Dao\untDMReport.pas</Transaction>
+    <Transaction>2022/08/19 13:39:09.000.752,D:\Projetos\Delphi\Cliente\Unit1.dfm=D:\Projetos\Delphi\Cliente\Dao\untDMReport.dfm</Transaction>
+  </Transactions>
+</BorlandProject>

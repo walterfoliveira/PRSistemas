@@ -1,0 +1,30 @@
+unit untDMReport;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, untPrincipal, frxClass, frxDBSet;
+
+type
+  TDMReport = class(TDataModule)
+    frxRepClientesSimples: TfrxReport;
+    frxDBConsulta: TfrxDBDataset;
+    frxReport1: TfrxReport;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  DMReport: TDMReport;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+
+
+{$R *.dfm}
+
+end.

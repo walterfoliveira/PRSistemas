@@ -1,0 +1,12 @@
+object DMCliente: TDMCliente
+  Height = 221
+  Width = 290
+  object dspConsulta: TDataSetProvider
+    Left = 128
+    Top = 96
+  end
+  object dsConsulta: TDataSource
+    Left = 128
+    Top = 160
+  end
+end

@@ -1,0 +1,42 @@
+unit Funcoes;
+
+interface
+
+uses
+  IdURI,
+  System.SysUtils,
+  System.Math,
+  System.DateUtils,
+  System.StrUtils,
+  System.Zip,
+  System.MaskUtils,
+
+
+  System.Net.HttpClient;
+
+function BuscarCEPNoViaCEP(UmCEP: string): TStringList;
+function SomenteNumero(snum : String) : String;
+
+implementation
+
+
+
+function SomenteNumero(snum : String) : String;
+VAR s1, s2: STRING;
+  i: Integer;
+BEGIN
+  if snum = EmptyStr then
+  begin
+   result:= '';
+   exit;
+  end;
+  s1 := snum;
+  s2 := '';
+  FOR i := 0 TO Length(s1) DO
+    IF s1[i] IN ['0'..'9'] THEN
+      s2 := s2 + s1[i];
+  result := s2;
+End;
+
+
+end.

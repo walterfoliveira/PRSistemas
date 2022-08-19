@@ -1,0 +1,20 @@
+unit uCliente;
+
+interface
+
+type
+
+  TCliente = class
+  private
+    { private declarations }
+  protected
+    { protected declarations }
+  public
+    { public declarations }
+  published
+    { published declarations }
+  end;
+
+implementation
+
+end.
